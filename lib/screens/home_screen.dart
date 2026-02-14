@@ -17,7 +17,13 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final firestoreService = FirestoreService();
+    final user = authProvider.user;
+
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final firestoreService = FirestoreService(user.uid);
 
     return Scaffold(
       appBar: AppBar(

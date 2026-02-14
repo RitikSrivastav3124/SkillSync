@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:skillsync/providers/auth_providers.dart';
 import '../services/firestore_service.dart';
 
 class AddGoalScreen extends StatefulWidget {
@@ -11,10 +13,18 @@ class AddGoalScreen extends StatefulWidget {
 class _AddGoalScreenState extends State<AddGoalScreen> {
   final titleController = TextEditingController();
   final descController = TextEditingController();
-  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
+    // ✅ If user null → prevent crash
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final firestoreService = FirestoreService(user.uid);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -128,7 +138,7 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                                 if (titleController.text.isEmpty) return;
 
                                 try {
-                                  await _firestoreService.addGoal(
+                                  await firestoreService.addGoal(
                                     titleController.text.trim(),
                                     descController.text.trim(),
                                   );

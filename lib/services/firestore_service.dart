@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:skillsync/models/task_model.dart';
 import '../models/goal_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final String uid = FirebaseAuth.instance.currentUser!.uid;
+  final String uid;
+
+  FirestoreService(this.uid);
 
   CollectionReference get _goalRef =>
       _db.collection('users').doc(uid).collection('goals');
@@ -33,12 +34,8 @@ class FirestoreService {
     await _goalRef.doc(goalId).delete();
   }
 
-  CollectionReference taskRef(String goalId) => _db
-      .collection('users')
-      .doc(uid)
-      .collection('goals')
-      .doc(goalId)
-      .collection('tasks');
+  CollectionReference taskRef(String goalId) =>
+      _goalRef.doc(goalId).collection('tasks');
 
   Future<void> addTask(String goalId, String title) async {
     final snapshot = await taskRef(goalId).get();

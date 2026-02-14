@@ -1,23 +1,23 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:skillsync/services/auth_services.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   User? user;
   bool isLoading = false;
 
   AuthProvider() {
-    user = _authService.currentUser;
+    _auth.authStateChanges().listen((User? u) {
+      user = u;
+      notifyListeners();
+    });
   }
 
   Future<void> login(String email, String password) async {
     try {
       isLoading = true;
       notifyListeners();
-      user = await _authService.login(email, password);
-    } catch (e) {
-      rethrow;
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
     } finally {
       isLoading = false;
       notifyListeners();
@@ -28,9 +28,10 @@ class AuthProvider extends ChangeNotifier {
     try {
       isLoading = true;
       notifyListeners();
-      user = await _authService.signUp(email, password);
-    } catch (e) {
-      rethrow;
+      await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
     } finally {
       isLoading = false;
       notifyListeners();
@@ -38,8 +39,6 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _authService.logout();
-    user = null;
-    notifyListeners();
+    await _auth.signOut();
   }
 }

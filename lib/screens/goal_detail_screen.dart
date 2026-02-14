@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:skillsync/providers/auth_providers.dart';
 import 'package:skillsync/services/ai_service.dart';
 import 'package:skillsync/services/firestore_service.dart';
 import '../models/task_model.dart';
@@ -20,11 +22,10 @@ class GoalDetailScreen extends StatefulWidget {
 }
 
 class _GoalDetailScreenState extends State<GoalDetailScreen> {
-  final FirestoreService _firestoreService = FirestoreService();
   final TextEditingController taskController = TextEditingController();
   final AIService _aiService = AIService();
 
-  void _showEditDialog(TaskModel task) {
+  void _showEditDialog(TaskModel task, FirestoreService firestoreService) {
     final editController = TextEditingController(text: task.title);
 
     showDialog(
@@ -44,7 +45,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
             onPressed: () async {
               if (editController.text.isEmpty) return;
 
-              await _firestoreService.updateTask(
+              await firestoreService.updateTask(
                 widget.goalId,
                 task.id,
                 editController.text.trim(),
@@ -61,6 +62,14 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final firestoreService = FirestoreService(user.uid);
     return Scaffold(
       appBar: AppBar(title: Text(widget.goalTitle)),
       body: LayoutBuilder(
@@ -96,7 +105,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                             );
 
                             for (var task in tasks) {
-                              await _firestoreService.addTask(
+                              await firestoreService.addTask(
                                 widget.goalId,
                                 task,
                               );
@@ -121,7 +130,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                   /// Task List
                   Expanded(
                     child: StreamBuilder<List<TaskModel>>(
-                      stream: _firestoreService.getTasks(widget.goalId),
+                      stream: firestoreService.getTasks(widget.goalId),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
                           return const Center(
@@ -164,7 +173,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                                     Checkbox(
                                       value: task.isCompleted,
                                       onChanged: (_) {
-                                        _firestoreService.toggleTask(
+                                        firestoreService.toggleTask(
                                           widget.goalId,
                                           task.id,
                                           task.isCompleted,
@@ -187,7 +196,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                                     IconButton(
                                       icon: const Icon(Icons.edit),
                                       onPressed: () {
-                                        _showEditDialog(task);
+                                        _showEditDialog(task, firestoreService);
                                       },
                                     ),
                                     IconButton(
@@ -196,7 +205,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                                         color: Colors.red,
                                       ),
                                       onPressed: () {
-                                        _firestoreService.deleteTask(
+                                        firestoreService.deleteTask(
                                           widget.goalId,
                                           task.id,
                                         );
@@ -237,7 +246,7 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                   onPressed: () async {
                     if (taskController.text.isEmpty) return;
 
-                    await _firestoreService.addTask(
+                    await firestoreService.addTask(
                       widget.goalId,
                       taskController.text.trim(),
                     );

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'home_screen.dart';
-import 'login_screen.dart';
+import 'package:skillsync/screens/auth_wrapper.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,7 +11,8 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _animation;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -21,34 +20,30 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1500),
     );
 
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    );
 
     _controller.forward();
 
-    _checkLogin();
+    _navigate();
   }
 
-  Future<void> _checkLogin() async {
+  Future<void> _navigate() async {
     await Future.delayed(const Duration(seconds: 2));
-
-    final user = FirebaseAuth.instance.currentUser;
 
     if (!mounted) return;
 
-    if (user != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const AuthWrapper()),
+    );
   }
 
   @override
@@ -63,22 +58,34 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: const Color(0xFF3F72AF),
       body: Center(
         child: FadeTransition(
-          opacity: _animation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.track_changes_rounded, size: 80, color: Colors.white),
-              SizedBox(height: 20),
-              Text(
-                "SkillSync",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(
+                  Icons.track_changes_rounded,
+                  size: 90,
                   color: Colors.white,
-                  letterSpacing: 1,
                 ),
-              ),
-            ],
+                SizedBox(height: 20),
+                Text(
+                  "SkillSync",
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Grow. Track. Achieve.",
+                  style: TextStyle(fontSize: 14, color: Colors.white70),
+                ),
+              ],
+            ),
           ),
         ),
       ),
